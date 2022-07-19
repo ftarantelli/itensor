@@ -315,7 +315,7 @@ C.Ham = C.Ham0 + h * C.Vp;
 C.GroundState();
 
 C.Measure(3);
-const double M00(C.Mval);
+const double M00(C.Mval), Z00(C.Zval);
 temp_gs = C.gs;
 
 double dir(1.), sum(hi);//, t00(hi*tau), tmax(4*n_cycle*hi*tau + t00);
@@ -362,7 +362,7 @@ for(int sweep = 0; sweep < events; ++sweep) {
 			//E.Ham = C.Ham;
 			//E.GroundState();
 			//out_file << sum * std::pow(upsilon, 15./23.) * std::pow(Lsize, 15./8.) << "		" << C.Mval << "		" << C.Zval-Szc << "		" << norm((E.gs.t()*C.gs)) << '\n';// << std::flush;
-			out_file << sum*Lsize/DeltaL << "		" << C.Mval/M00 << "		" << C.Zval << '\n';
+			out_file << sum*Lsize/DeltaL << "		" << C.Mval/M00 << "		" << C.Zval/Z00 << '\n';
 		}
 }
 
@@ -370,7 +370,7 @@ C.Measure(3);
 //E.Ham = C.Ham;
 //E.GroundState();
 //out_file << sum * std::pow(upsilon, 15./23.) * std::pow(Lsize, 15./8.) << "		" << C.Mval << "		" << C.Zval-Szc << "		" << norm((temp_gs.t()*C.gs)) << '\n';
-out_file << sum*Lsize/DeltaL << "		" << C.Mval/M00 << "		" << C.Zval << '\n';
+out_file << sum*Lsize/DeltaL << "		" << C.Mval/M00 << "		" << C.Zval/Z00 << '\n';
 /*
 std::sprintf(output, "data/gsL%dg%.0lfhi%.0f_%.0lfhf%.0f_%.0lf.dat", Lsize, g, hi, 10.*abs(hi), hf, 10.*hf );
 std::ofstream out_file1(output, std::ios::out | std::ios::trunc);

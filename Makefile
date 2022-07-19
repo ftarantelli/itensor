@@ -4,8 +4,8 @@
 # 2. Edit LIBRARY_DIR to point at the location of your ITensor Library
 #    source folder (this is the folder that has options.mk in it).
 #    Also, edit TDVP_DIR to point at the location of the TDVP source files.
-LIBRARY_DIR=$(HOME)/itensor
-TDVP_DIR=$(HOME)/itensor/tdvp
+LIBRARY_DIR=$(HOME)/Desktop/C++/itensor
+TDVP_DIR=$(LIBRARY_DIR)/tdvp
 
 # 3. If your 'main' function is in a file called 'myappname.cc', then
 #    set APP to 'myappname'. Running 'make' will compile the app.
@@ -36,7 +36,7 @@ CCFLAGS+=-I$(TDVP_DIR)
 CCGFLAGS+=-I$(TDVP_DIR)
 
 #Mappings --------------
-OBJECTS=$(patsubst %.cc,%.o, $(CCFILES))
+OBJECTS=$(patsubst %.cpp,%.o, $(CCFILES))
 GOBJECTS=$(patsubst %,.debug_objs/%, $(OBJECTS))
 
 #Rules ------------------
