@@ -134,7 +134,7 @@ while( argc > 1 ) {
     auto energy = real(innerC(psi1,H,psi1));
     
 	double dir(1.), sum(hi);//, t00(hi*tau), tmax(4*n_cycle*hi*tau + t00);
-	int events = 2*n_cycle*int((tau*hf - tau*hi)/t0) + 1;
+	int events = 2*n_cycle*int((tau*hf - tau*hi)*2./J/t0) + 1;
 	int frac = 10, prnt = int(2.*abs(sigma)*20);
 
 	if( prnt > events ) prnt = events;
