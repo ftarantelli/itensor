@@ -193,7 +193,7 @@ while( argc > 1 ) {
     auto args = Args("Method=","DensityMatrix","Cutoff=",1E-12,"MaxDim=",2000);
     for(int n = 1; n <= events; ++n)
         {
-        sum += dir * t0 / tau;
+        sum += dir * t0 / tau * J/2.;
         
         for(int i = 1; i <= N-1; ++ i)
         		ampo += -dir * (t0 / tau)*J/2., "Sx",i;
@@ -217,7 +217,7 @@ while( argc > 1 ) {
             //printfln("Energy using overlap at time %.1f is %.10f", n*t0, real(innerC(psi2,H,psi2)) );
             
             std::cout << n*t0 << "\n";
-            out_file << sum*N/DeltaL << "	" << std::real(tot_meas(psi2, sites, N)/M00) << "		" << n*t0 << "\n" << std::flush;
+            out_file << sum*N/DeltaL*2./J << "	" << std::real(tot_meas(psi2, sites, N)/M00) << "		" << n*t0 << "\n" << std::flush;
             }
 
 
