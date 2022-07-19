@@ -42,7 +42,7 @@ auto tot_meas(auto psi, auto sites, int N) {
         //take an inner product 
         auto szj = 2.*eltC(bra*Szjop*ket);
         out += real(szj);
-        }
+        } 
         //std::cout << elt(bra*ket) << "   Measss\n";
         //printfln("MEASURE Sz:			%d %.12f",j,szj);
         return(out/float(N));
