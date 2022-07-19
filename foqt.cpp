@@ -107,7 +107,7 @@ void chain::GroundState(void) {
 			gs(i) = (eigvec.col(0))(i);// complex( (eigvec.col(0))(i), 0.);
 		gs = gs / norm(gs);
 
-		//std::cout  << eigvec.size() <<"\n" ;
+		//std::cout  << eigval <<"8gsgsgs\n" ;
 
 }
 
@@ -134,7 +134,7 @@ void chain::twolevels(void) {
 		for(int i=0; i<states; ++i)
 			gs(i) = (eigvec.col(indexgs))(i);// complex( (eigvec.col(0))(i), 0.);
 		gs = gs / norm(gs);
-		//std::cout << real(eigval(1)) << "\n";
+		std::cout << real(eigval) << "\n";
 		energy = real(eigval(1-indexgs) - eigval(indexgs));
 		//std::cout  << eigvec.size() <<"\n" ;
 
@@ -213,7 +213,7 @@ void chain::RungeKuttaPsi(double _dt) {
 
 int main(int argc, char *argv[]) {
 
-	int Lsize(6); int pbc(1); int n_cycle(1), yy(0);
+	int Lsize(8); int pbc(0); int n_cycle(1), yy(0);
 	double dt(0.01);//, ds(0.02);
 	g = 1.; hi = -0.25; hf = 0.25;// tau = 100;
 	double upsilon = 0.1, sigma = -5., sigmaf = -7.;	// , omega = 1.
@@ -293,8 +293,11 @@ h = 0.;
 
 E.BuildHam();
 E.Ham = E.Ham0 + h * E.Vp;
+//E.GroundState();
 E.twolevels();
 double DeltaL = E.energy;
+
+std::cout << DeltaL << "\n";
 
 //tau = upsilon * std::pow(Lsize, 23./8.);
 tau = upsilon / std::pow(DeltaL, 2.) * Lsize;
@@ -313,9 +316,13 @@ h = hi;
 	//h = 0.5;
 C.Ham = C.Ham0 + h * C.Vp;
 C.GroundState();
-
+//exit(8);
 C.Measure(3);
 const double M00(C.Mval), Z00(C.Zval);
+
+std::cout << Z00 << " " << M00 << "mz\n";
+
+
 temp_gs = C.gs;
 
 double dir(1.), sum(hi);//, t00(hi*tau), tmax(4*n_cycle*hi*tau + t00);

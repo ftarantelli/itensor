@@ -213,14 +213,14 @@ while( argc > 1 ) {
         psi2.noPrime();
         psi2 = applyMPO(expH2,psi2,args);
         psi2.noPrime().normalize();
-        if(n%int(std::real(prnt/t0)) == 0)
-            {
+        //if(n%int(std::real(prnt/t0)) == 0) {
+            
             //printfln("\nMaximum bond dimension at time %.1f is %d ", n*t0, maxLinkDim(psi2));
             //printfln("Energy using overlap at time %.1f is %.10f", n*t0, real(innerC(psi2,H,psi2)) );
             
             std::cout << n*t0 << "\n";
             out_file << sum*N/DeltaL*2./J << "	" << std::real(tot_meas(psi2, sites, N)/M00) << "		" << n*t0 << "\n" << std::flush;
-            }
+           // }
 
 
         }
