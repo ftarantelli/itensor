@@ -6,11 +6,7 @@
 
 int main(int argc, char *argv[])
     {
-    
-    char output[80];
-    std::sprintf(output, "data.dat");//"%s/fotqu%.0fs%.0fl%d.dat", folder, upsilon*10., abs(sigma), Lsize );
-    std::ofstream out_file(output, std::ios::out | std::ios::trunc);
-    out_file.precision(16);
+
     auto expcutoff(12.);
     
     int n_cycle(1.);
@@ -70,6 +66,11 @@ while( argc > 1 ) {
 
     int nsw = tend/t;
     int N = Nx*Ny;
+    
+    char output[80];
+    std::sprintf(output, "dataN%d.dat", N);//"%s/fotqu%.0fs%.0fl%d.dat", folder, upsilon*10., abs(sigma), Lsize );
+    std::ofstream out_file(output, std::ios::out | std::ios::trunc);
+    out_file.precision(16);
     
         // Make N spin 1/2's
     auto sites = SpinHalf(N, {"ConserveQNs=", false});
