@@ -38,7 +38,7 @@ while( argc > 1 ) {
 		case 'g':
 				g = atof( &argv[1][1] )*J/2.;
 			break;
-		case 'h':
+		case 'h': 
 			if(argv[1][1] == 'i')		hi = atof( &argv[1][2] )*J/2.;
 			else if(argv[1][1] == 'f')	hf = atof( &argv[1][2] )*J/2.;
 			else						h = atof( &argv[1][1] )*J/2.;
