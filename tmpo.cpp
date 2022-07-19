@@ -97,7 +97,7 @@ while( argc > 1 ) {
     auto [energy00,psi00] = dmrg(H,psi0,sweeps0,{"Quiet=",true});
     //std::cout << energy0 << "\n";
     auto wfs = std::vector<MPS>(1);
-    wfs.at(0) = psi0;
+    wfs.at(0) = psi00;
 
     auto [en1,psi11] = dmrg(H,wfs,randomMPS(sites),sweeps0,{"Quiet=",true,"Weight=",20.0});
 // #################################################################################
@@ -140,6 +140,8 @@ while( argc > 1 ) {
 	if( prnt > events ) prnt = events;
 
 	hi = std::abs(hi);
+    //std::cout << sum << " " << sum*N/DeltaL*2./J << " " << hi << " " << DeltaL << " " << en1 << " " << energy00 << " " << energy0 << " " << M00 << "\n";
+    //exit(8);
     
     /*
     // QUENCH
