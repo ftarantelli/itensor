@@ -8,4 +8,4 @@ aux=`echo "${aux} ${fname}"`
 
 git add ${aux}
 git commit -m "update files"
-git push -f
+git push
