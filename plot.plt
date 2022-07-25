@@ -129,9 +129,9 @@ dataf3 = sprintf("%s", ARG3);
 
 
 
-plot  "data.dat" using ($1):($2) t 'mps' w l lw 5. lt rgb 'red' dt 6,\
+plot  "dataN8.dat" using ($1):($2) t 'mps' w l lw 5. lt rgb 'red' dt 6,\
       "fotqu.dat" using ($1):($3) t 'L = 12' w l lw 5. lt rgb 'blue' dt 5,\
-      
+      "dataN50.dat" using ($1):($2) t '50mps' w l lw 5. lt rgb 'black' dt 2,\
       #dataf3 using ($1):($2) t 'L = 14' w l lw 5. lt 7 dt 6,\
 #      "noisekitL100k1Dk2.dat" using ($1):(($2)*150.**(1/8.)) t 'L = 150' w l lw 3. lt 8 dt 1,\
 #      "isC2DeS150l50.dat" using ($1):($2*50**(1./8.)) t 'L = 50  ' w l lw 5. lt 1 dt 4,\
