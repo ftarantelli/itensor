@@ -1,57 +1,41 @@
 #include "tmpo.hpp"
 #include <fstream>
 
-
-
+std::random_device rd;
+std::mt19937 mt(rd());
+std::uniform_real_distribution<double> dist(0., 1.);
+//double mrn; //= dist(mt);	//rand()/RAND_MAX;
+//mrn = dist(mt);
 
 int main(int argc, char *argv[])
     {
 
-    auto expcutoff(12.);
-    
-    int n_cycle(1.);
-    // The system will be a 2x20 ladder
-    int Nx = 8;
-    int Ny = 1;
-    
-    auto t = 0.05;
-    auto tend = 1.;
-    
-    auto t0 = 0.01;
-    
-    auto J = 4.;
-    auto g = 1.*J/2.;
-    auto h = 0.5*J/2., hf = 0.*J/2., hi = 0.*J/2.;
-    
-    auto sigma(-5.), upsilon(0.1), tau(0.);
-    
+	double pbc(-1.), t0(0.01), tend(1.), t(0.05);
+	int N = 20;
+	auto sites = Fermion(N, {"ConserveQNs=", false} );
+	
+	const double yg(2.), ymu(1.);
+	double kappa(1.), jack(1.);
+	
 while( argc > 1 ) {
 
 	switch(argv[1][0]) {
 		case 'N':
-				Nx = atoi( &argv[1][1] );
-			break;
-		case 'g':
-				g = atof( &argv[1][1] )*J/2.;
-			break;
-		case 'h': 
-			if(argv[1][1] == 'i')		hi = atof( &argv[1][2] )*J/2.;
-			else if(argv[1][1] == 'f')	hf = atof( &argv[1][2] )*J/2.;
-			else						h = atof( &argv[1][1] )*J/2.;
+				N = atoi( &argv[1][1] );
 			break;
 		case 't':
 			if(argv[1][1] == 'o')		t0 = atof( &argv[1][2] );
 			else if(argv[1][1] == 'd')	tend = atof( &argv[1][2] );
 			else						t = atof( &argv[1][1] );			
 			break;
-		case 'c':
-				expcutoff = -atof( &argv[1][1] );
+		case 'j':
+				jack = atof( &argv[1][1] );
 			break;
-		case 'u':
-				upsilon = atof( &argv[1][1] );
+		case 'k':
+				kappa = atof( &argv[1][1] );
 			break;
-		case 's':
-				sigma = atof( &argv[1][1] );
+		case 'p':
+				pbc = atof( &argv[1][1] );
 			break;
 		case '-':
 			//	std::sprintf(folder, "%s", &argv[1][1]);
@@ -63,73 +47,132 @@ while( argc > 1 ) {
 	++argv;
 	--argc;
 }
+	int nsw = tend/t;
 
-    int nsw = tend/t;
-    int N = Nx*Ny;
-    
+	auto mu = -2. + kappa * std::pow(N, -ymu) ;
+	auto delta = 1.;
+	auto g = jack * std::pow(N, -yg);
+	
+	auto ampo = AutoMPO(sites);
+	for( auto n : range1(N-1) )
+   	 {
+   	 ampo += -delta,"Cdag",n,"Cdag",n+1;
+   	 ampo += -delta,"C",n+1,"C",n;
+   	 
+   	 ampo += -1.,"Cdag",n,"C",n+1;
+   	 ampo += -1.,"Cdag",n+1,"C",n;
+   	 
+   	 ampo += -mu,"Cdag",n,"C",n;
+   	 ampo += -g,"Cdag",n,"C",n, "Cdag",n+1,"C",n+1;
+   	 
+   	 //ampo += - Cplx_i / 2., "Cdag", n, "C", n;
+   	 }
+   	 ampo += -mu,"Cdag",N,"C",N;
+
+   	 ampo += -pbc*delta,"Cdag",N,"Cdag",1;
+   	 ampo += -pbc*delta,"C",1,"C",N;
+   	 
+   	 ampo += -pbc,"Cdag",N,"C",1;
+   	 ampo += -pbc,"Cdag",1,"C",N;
+
+   	 //ampo += - Cplx_i / 2., "Cdag", N, "C", N;
+
+	auto H = toMPO(ampo);
+	
+	auto state = InitState(sites,"Emp");
+	for( auto n : range1(N) ) if( n%2==0 ) state.set(n,"Occ");
+	auto sweeps0 = Sweeps(5); //number of sweeps is 5
+	sweeps0.maxdim() = 10,20,100,100,200;
+	sweeps0.cutoff() = 1E-10;
+	auto [energy,psi] = dmrg(H,randomMPS(state),sweeps0,"Silent");
+	
+	
     char output[80];
-    std::sprintf(output, "dataN%d.dat", N);//"%s/fotqu%.0fs%.0fl%d.dat", folder, upsilon*10., abs(sigma), Lsize );
+    std::sprintf(output, "couplingN%dk%.0fj%.0f.dat", N, kappa, jack);
+
     std::ofstream out_file(output, std::ios::out | std::ios::trunc);
     out_file.precision(16);
     
-        // Make N spin 1/2's
-    auto sites = SpinHalf(N, {"ConserveQNs=", false});
+    
+    
+    auto psi1 = MPS(psi);
+    auto psi2 = psi1;
+    //auto psi2dag = dag(prime(psi2(N),"Site"));
 
-    // Make the Hamiltonian for rung-decoupled Heisenberg ladder
-    auto ampo = AutoMPO(sites);    
-    for(int i = 1; i <= N-1; ++ i)
+    auto sweeps = Sweeps(1);
+    sweeps.maxdim() = 2000;
+    sweeps.cutoff() = 1E-12;
+    /*
+    sweeps.maxdim() = 2000;
+    sweeps.cutoff() = std::pow(1, -expcutoff);//1E-12;
+    sweeps.niter() = 10;
+    */
+
+//std::cout << "hghgh11g\n";
+for(int n = 1; n <= nsw; ++n)
         {
-        ampo += -J,"Sx",i,"Sx",i+1;
-        ampo += -g, "Sz",i;
-        }
-        ampo += -g, "Sz",N;
+        if(n < 3)
+            {
+            // Global subspace expansion
+            std::vector<Real> epsilonK = {1E-12, 1E-12};
+            addBasis(psi1,H,epsilonK,{"Cutoff",1E-8,
+                                      "Method","DensityMatrix",
+                                      "KrylovOrd",3,
+                                      "DoNormalize",true,
+                                      "Quiet",true});
+            }
         
-    auto H = toMPO(ampo);
-    //printfln("Maximum bond dimension of H is %d",maxLinkDim(H));
-    
-// #################################################################################
-
-    auto sweeps0 = Sweeps(5); //number of sweeps is 5
-    sweeps0.maxdim() = 20,50,200,200,400;
-    sweeps0.cutoff() = 1E-12;
-
-    auto psi0 = randomMPS(sites);
-
-    auto [energy00,psi00] = dmrg(H,psi0,sweeps0,{"Quiet=",true});
-    //std::cout << energy0 << "\n";
-    auto wfs = std::vector<MPS>(1);
-    wfs.at(0) = psi00;
-
-    auto [en1,psi11] = dmrg(H,wfs,randomMPS(sites),sweeps0,{"Quiet=",true,"Weight=",20.0});
-// #################################################################################
-
-    auto DeltaL = en1 - energy00;
-    
-    	hi = sigma * DeltaL / N *J/2.;
-	hf = - sigma * DeltaL / N *J/2.;
-	tau = upsilon / std::pow(DeltaL, 2.) * N;
-	h = hi;
-	
-	auto ampoh = AutoMPO(sites);
-	for(int i = 1; i <= N-1; ++ i)
-	   {
-        ampo += -h, "Sx", i;
-        ampoh += -1., "Sx", i;
+        // TDVP sweep
+        energy = tdvp(psi1,H,-t,sweeps,{"Truncate",true,
+                                        "DoNormalize",true,
+                                        "Quiet",true,
+                                        "NumCenter",1});
         }
-     ampoh += -1., "Sx",N;
-     ampo += -h, "Sx",N;
-    
-   //ampo += ampoh*h;
-    H = toMPO(ampo);
-    
-    psi0 = randomMPS(sites);
 
-    auto [energy0,psi] = dmrg(H,psi0,sweeps0,{"Quiet=",true});
-    //std::cout << energy0 << "\n";
-    auto M00 = tot_meas(psi, sites, N);
 
-    //auto obsite = 3;
+    int traj(100);
     
+   // auto ampoC = ampo;
+    //ampoC += 1., "C", N;
+    
+    //auto Cmpo = toMPO(ampoC);
+    
+    auto Cop = op(sites, "C", N);
+    double dpm(0.);
+
+	   std::cout << "11prrr\n";   
+    auto expH1 = toExpH(ampo,-(1-1_i)/2*t0*Cplx_i);
+    auto expH2 = toExpH(ampo,-(1+1_i)/2*t0*Cplx_i);
+   std::cout << "prrr\n";
+       
+    auto args = Args("Method=","DensityMatrix","Cutoff=",1E-12,"MaxDim=",2000);
+       
+//    for(int tt=0; tt < traj; ++tt){
+    for(int sweep=0; sweep<int(t/t0); ++sweep ) {
+    	psi2.position(N);
+    	auto psi2dag = dag(prime(psi2(N),"Site"));
+    	dpm = tend*real(eltC(psi2dag*Cop*psi2(N)));
+    	
+    	if(dist(mt) <= dpm){
+     	auto newA = Cop*psi(N);
+		newA.noPrime();
+		psi.set(N,newA);
+    	}
+    	else {
+    		//auto dpsi = applyMPO(t0*Cplx_i*H, psi2, args);
+    		//psi2 = psi2 - dpsi;
+    		
+       psi2 = applyMPO(expH1,psi2,args);
+       psi2.noPrime();
+       psi2 = applyMPO(expH2,psi2,args);
+       psi2.noPrime().normalize();
+    	}
+    	out_file << sweep*tend << "		" << tot_meas(psi, sites, N) << "\n";
+
+    }
+//    }
+
+/*
     auto psi1 = MPS(psi);
     auto psi2 = psi1;
     auto energy = real(innerC(psi1,H,psi1));
@@ -143,7 +186,7 @@ while( argc > 1 ) {
 	hi = std::abs(hi);
     //std::cout << sum << " " << sum*N/DeltaL*2./J << " " << hi << " " << DeltaL << " " << en1 << " " << energy00 << " " << energy0 << " " << M00 << "\n";
     //exit(8);
-    
+*/   
     /*
     // QUENCH
     h = h - hf;
@@ -153,16 +196,17 @@ while( argc > 1 ) {
         }
         ampo += h, "Sx",N;
     */
-
+/*
     auto sweeps = Sweeps(1);
     sweeps.maxdim() = 2000;
     sweeps.cutoff() = 1E-12;
+*/
     /*
     sweeps.maxdim() = 2000;
     sweeps.cutoff() = std::pow(1, -expcutoff);//1E-12;
     sweeps.niter() = 10;
     */
-
+/*
 //std::cout << "hghgh11g\n";
     for(int n = 1; n <= nsw; ++n)
         {
@@ -225,7 +269,7 @@ while( argc > 1 ) {
 
 
         }
-
-    return 0;
-    }
+*/
+    return(0);
+}
 

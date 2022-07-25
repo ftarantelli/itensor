@@ -1,0 +1,77 @@
+\documentclass[pra,twocolumn,preprintnumbers,amsmath,amssymb,nofootinbib,floatfix]{revtex4}
+
+\usepackage{graphicx, bm, tikz, braket, mathrsfs, mathtools}
+\usepackage[breaklinks]{hyperref}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+
+\makeatletter
+
+\def\graphicscale{\twocolumn@sw{0.3}{0.4}}
+\def\graphicthreescale{\twocolumn@sw{0.3}{0.4}}
+
+\begin{document}
+
+\title{Notations}
+\maketitle
+
+
+We use the following Hamiltonian with aperiodic boundary condition (ABC):
+\begin{equation}
+\label{HKiataev}
+\hat H_K = - \sum_{x=1}^{L} \left( \hat c^\dagger_x \hat c_{x+1}
+ + \delta \hat c^\dagger_x c_{x+1}^\dagger + {\rm h.c.}\right)
+ - \mu \sum _{j=1}^L \hat \hat c^\dagger_x \hat c_x \,\,;
+\end{equation}
+where we consider $\hat c_{L+1} = - \hat c_1\,$.\\
+In the scaling functions of this model, we fix these scaling variables:
+\begin{eqnarray}
+\label{Upsilon}
+\Upsilon & = & \tau_s L^{-(y_\mu + z)}\,\,, \\
+\label{kappa}
+\kappa & = & w_i \tau_s^{y_\mu / (y_\mu + z)} \,\,, \\
+\label{Omega}
+\Omega & = & w(t) \tau_s^{y_\mu / (y_\mu + z)} \,\,, \\
+\end{eqnarray}
+with $w(t) = \mu(t) - \mu_c$ and $w(t) = t / \tau_s\,$.\\
+Moreover, to analyze the system behavior, we introduce a set of 
+observables:
+\begin{itemize}
+
+\item the time-dependent correlations functions:
+\begin{eqnarray}
+\label{tCcorr}
+C_x & = & \braket{\psi(t) \big| \hat c^\dagger_y \hat c_{y+x} + {\rm h.c.} 
+	\big| \psi(t)}\,\,,\\
+\label{tPcorr}
+P_x & = & \braket{\psi(t) \big| \hat c^\dagger_y \hat c^\dagger_{y+x} + {\rm h.c.} 
+	\big| \psi(t)}\,\,;\\
+\end{eqnarray}
+
+\item the equilibrium correlations functions:
+\begin{eqnarray}
+\label{eCcorr}
+C_x^o & = & \braket{GS(t) \big| \hat c^\dagger_y \hat c_{y+x} + {\rm h.c.} 
+	\big| GS(t)}\,\,,\\
+\label{ePcorr}
+P_x^o & = & \braket{GS(t) \big| \hat c^\dagger_y \hat c^\dagger_{y+x} + {\rm h.c.} 
+	\big| GS(t)}\,\,;\\
+\end{eqnarray}
+
+\item the adiabacity:
+\begin{equation}
+\label{Adiab}
+A = -\ln{ \abs*{\braket{GS(t) \big| \psi(t)}} } \,\,;
+\end{equation}
+\item the energy difference:
+\begin{equation}
+\label{Energy}
+E - E_o = \braket{ \psi(t) \big| \hat H(t) \big| \psi(t) } - 
+\braket{ GS(t) \big| \hat H(t) \big| GS(t) } \,\,;
+\end{equation}
+\item the particle density:
+\begin{equation}
+\label{Energy}
+\delta \rho(t) = \rho - \rho _c = \frac{ {\rm N - N}_c }{\rm L} \,\,.
+\end{equation}
+\end{itemize}
+\end{document}
