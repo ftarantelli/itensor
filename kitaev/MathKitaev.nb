@@ -1,0 +1,39 @@
+In[617]:=
+
+mat = { {0, 0, 0, 2*d*Sin[k]}, {0, -m  - 2*Cos[k], 0, 0}, {0, 0, - m  - 2*Cos[k], 0}, {2*d*Sin[k], 0, 0, -2*m - 4*Cos[k]} }
+mat//MatrixForm
+
+Det[mat]
+Identity[4]
+Eigenvectors[mat]
+Eigenvalues[mat]
+
+F[k_, m_, d_] :=  Eigenvalues[{ {0, 0, 0, 2*d*Sin[k]}, {0, -m  - 2*Cos[k], 0, 0}, {0, 0, - m  - 2*Cos[k], 0}, {2*d*Sin[k], 0, 0, -2*m - 4*Cos[k]} }]
+G[k_, m_, d_] :=  Eigenvectors[{ {0, 0, 0, 2*d*Sin[k]}, {0, -m  - 2*Cos[k], 0, 0}, {0, 0, - m  - 2*Cos[k], 0}, {2*d*Sin[k], 0, 0, -2*m - 4*Cos[k]} }]
+
+G[0.06283185307179587,-2., 1.]
+
+F[0.06283185307179587,-2., 1.]
+
+Dsolve[ {x'[t] == - I * 2.*d*Sin[k]*x[t], y'[t] ==  I * m * y[t] + I * 2. * Cos[k]*y[t], z'[t] == I * m * z[t] + I * 2. * Cos[k]*z[t], w'[t] == -I*2.*d*Sin[k]*x[t] +I* 2.*m*w[t]+I*4.*Cos[k]*w[t], x[0]==-((-2* Cot[k]-m *Csc[k]+Sqrt[2+2* d^2+m^2+4* m* Cos[k]+2* Cos[2* k]-2* d^2* Cos[2 *k]]* Csc[k])/(2 *d)), y[0]==0, z[0]==0, w[0]==1}, {x[t],y[t],z[t],w[t]},t ]
+
+DSolve[{x'[s] == Cos[t[s]], y'[s] == Sin[t[s]], t'[s] == s, x[0] == 0,
+   y[0] == 0, t[0] == 0}, {x[s], y[s], t[s]}, s]
+
+Out[618]= {{0,0,0,2 d Sin[k]},{0,-m-2 Cos[k],0,0},{0,0,-m-2 Cos[k],0},{2 d Sin[k],0,0,-2 m-4 Cos[k]}}
+Out[619]//MatrixForm= (0	0	0	2 d Sin[k]
+0	-m-2 Cos[k]	0	0
+0	0	-m-2 Cos[k]	0
+2 d Sin[k]	0	0	-2 m-4 Cos[k]
+
+)
+Out[621]= -4 d^2 m^2 Sin[k]^2-16 d^2 m Cos[k] Sin[k]^2-16 d^2 Cos[k]^2 Sin[k]^2
+Out[622]= 4
+Out[623]= {{0,0,1,0},{0,1,0,0},{-((-2 Cot[k]-m Csc[k]+Sqrt[2+2 d^2+m^2+4 m Cos[k]+2 Cos[2 k]-2 d^2 Cos[2 k]] Csc[k])/(2 d)),0,0,1},{-((-2 Cot[k]-m Csc[k]-Sqrt[2+2 d^2+m^2+4 m Cos[k]+2 Cos[2 k]-2 d^2 Cos[2 k]] Csc[k])/(2 d)),0,0,1}}
+Out[624]= {-m-2 Cos[k],-m-2 Cos[k],-m-2 Cos[k]-Sqrt[2+2 d^2+m^2+4 m Cos[k]+2 Cos[2 k]-2 d^2 Cos[2 k]],-m-2 Cos[k]+Sqrt[2+2 d^2+m^2+4 m Cos[k]+2 Cos[2 k]-2 d^2 Cos[2 k]]}
+Out[629]= {{0.695913,0.,0.,0.718126},{-0.718126,0.,0.,0.695913},{0.,1.,0.,0.},{0.,0.,-1.,0.}}
+Out[631]= {0.12959,-0.121696,0.00394654,0.00394654}
+Out[633]= Dsolve[{(x^\[Prime])[t]==(0. -2. I) d Sin[k] x[t],(y^\[Prime])[t]==I m y[t]+(0. +2. I) Cos[k] y[t],(z^\[Prime])[t]==I m z[t]+(0. +2. I) Cos[k] z[t],(w^\[Prime])[t]==(0. +2. I) m w[t]+(0. +4. I) Cos[k] w[t]-(0. +2. I) d Sin[k] x[t],x[0]==-(1/(2 d))(-2 Cot[k]-m Csc[k]+Sqrt[2+2 d^2+m^2+4 m Cos[k]+2 Cos[2 k]-2 d^2 Cos[2 k]] Csc[k]),y[0]==0,z[0]==0,w[0]==1},{x[t],y[t],z[t],w[t]},t]
+Out[635]= {{t[s]->s^2/2,x[s]->Sqrt[\[Pi]] FresnelC[s/Sqrt[\[Pi]]],y[s]->Sqrt[\[Pi]] FresnelS[s/Sqrt[\[Pi]]]}}
+
+Out[577]= Dsolve[{(x^\[Prime])[t]==(0. -2. I) d Sin[k] x[t],(y^\[Prime])[t]==I (m+2. Cos[k]) y[t],(z^\[Prime])[t]==I (m+2. Cos[k]) z[t],(w^\[Prime])[t]==(0. +2. I) (1. m+2. Cos[k]) w[t]-(0. +2. I) d Sin[k] x[t],x[0]==(2 Cot[k]+(m-Sqrt[2+2 d^2+m^2+4 m Cos[k]-2 (-1+d^2) Cos[2 k]]) Csc[k])/(2 d),y[0]==0,z[0]==0,w[0]==1},{x[t],y[t],z[t],w[t]},t]

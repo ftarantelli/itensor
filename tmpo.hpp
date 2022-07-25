@@ -14,13 +14,13 @@ auto measure(auto j, auto psi, auto sites) {
         //auto tampo = AutoMPO(sites);
         //tampo += "Sz", j;
         //auto Szjop = toMPO(tampo);
-        auto Szjop = op(sites,"Sz",j);
+        auto NN = op(sites,"N",j);
 
         //take an inner product 
-        auto szj = 2.*eltC(bra*Szjop*ket);
+        auto nval = eltC(bra*NN*ket);
         //std::cout << elt(bra*ket) << "   Measss\n";
         //printfln("MEASURE Sz:			%d %.12f",j,szj);
-        return(szj);
+        return(nval);
 }
 
 
@@ -37,23 +37,53 @@ auto tot_meas(auto psi, auto sites, int N) {
         //auto tampo = AutoMPO(sites);
         //tampo += "Sz", j;
         //auto Szjop = toMPO(tampo);
-        auto Szjop = op(sites,"Sz",j);
+        auto Njop = op(sites,"N",j);
 
         //take an inner product 
-        auto szj = 2.*eltC(bra*Szjop*ket);
-        out += real(szj);
+        auto nj = eltC(bra*Njop*ket);
+        //std::cout << elt(bra*ket) << "   Measss\n";
+        //printfln("MEASURE Sz:			%d %.12f",j,szj);
+        out += real(nj);
         } 
         //std::cout << elt(bra*ket) << "   Measss\n";
         //printfln("MEASURE Sz:			%d %.12f",j,szj);
-        return(out/float(N));
+        return(out);
 }
 
 
 
-auto correlator(auto i, auto j, auto psi, auto sites){
-//Make the operators you want to measure
-	auto op_i = op(sites,"Sx",i);
-	auto op_j = op(sites,"Sz",j);
+auto correlator(auto i, auto j, auto psi, auto sites, auto N ){
+// ###IMPORTANT###		ONLY FOR I \neq J
+
+auto Adag_i = op(sites,"Cdag",i);
+auto A_j = op(sites,"C",j);
+
+//'gauge' the MPS to site i
+//any 'position' between i and j, inclusive, would work here
+psi.position(i);
+
+auto psidag = dag(psi);
+psidag.prime();
+
+//index linking i to i-1:
+auto li_1 = leftLinkIndex(psi,i);
+auto Cij = prime(psi(i),li_1)*Adag_i*psidag(i);
+for(int k = i+1; k < j; ++k)
+    {
+    Cij *= psi(k);
+    Cij *= op(sites,"F",k); //Jordan-Wigner string
+    Cij *= psidag(k);
+    }
+//index linking j to j+1:
+auto lj = rightLinkIndex(psi,j);
+Cij *= prime(psi(j),lj);
+Cij *= A_j;
+Cij *= psidag(j);
+
+auto result = real(eltC(Cij)); //or eltC(C) if expecting complex
+	/*
+		auto op_i = op(sites,"Cdag",i);
+	auto op_j = op(sites,"C",j);
 //'gauge' the MPS to site i
 //any 'position' between i and j, inclusive, would work here
 	psi.position(i); 
@@ -78,7 +108,9 @@ auto correlator(auto i, auto j, auto psi, auto sites){
 	C *= prime(psi(j),lj)*op_j;
 	C *= prime(psidag(j),"Site");
 
-	auto result = 4.*elt(C); //or eltC(C) if expecting complex
+	result += 4.*elt(C); //or eltC(C) if expecting complex
+}
+*/
 
 	return(result);
 }
