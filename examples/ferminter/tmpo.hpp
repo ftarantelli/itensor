@@ -17,7 +17,7 @@ auto measure(auto j, auto psi, auto sites) {
         auto NN = op(sites,"N",j);
 
         //take an inner product 
-        auto nval = eltC(bra*NN*ket);
+        auto nval = real(eltC(bra*NN*ket));
         //std::cout << elt(bra*ket) << "   Measss\n";
         //printfln("MEASURE Sz:			%d %.12f",j,szj);
         return(nval);

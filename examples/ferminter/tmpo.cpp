@@ -1,18 +1,26 @@
 #include "tmpo.hpp"
 #include <fstream>
+#include <armadillo>
 
+using namespace arma;
 
-
+std::random_device rd;
+std::mt19937 mt(rd());
+std::uniform_real_distribution<double> dist(0., 1.);
+//double mrn; //= dist(mt);	//rand()/RAND_MAX;
+//mrn = dist(mt);
 
 int main(int argc, char *argv[])
     {
 
-	double pbc(-1.), t0(0.01), tend(1.), t(0.05);
-	int N = 20;
+	double pbc(0.), t0(0.01), tend(1.), t(0.05);
+	int N = 8, nsw = tend/t;
 	auto sites = Spinless(N, {"ConserveQNs=", false} );
 	
 	const double yg(2.), ymu(1.);
 	double kappa(1.), jack(1.);
+	
+    int ensem(100);
 	
 while( argc > 1 ) {
 
@@ -34,6 +42,9 @@ while( argc > 1 ) {
 		case 'p':
 				pbc = atof( &argv[1][1] );
 			break;
+		case 'e':
+				ensem = atoi( &argv[1][1] );
+			break;
 		case '-':
 			//	std::sprintf(folder, "%s", &argv[1][1]);
 			break;
@@ -44,6 +55,10 @@ while( argc > 1 ) {
 	++argv;
 	--argc;
 }
+	char output[80];
+     std::sprintf(output, "couplingN%dk%.0fj%.0f.dat", N, kappa, jack);
+	std::ofstream out_file(output, std::ios::out | std::ios::trunc);
+	out_file.precision(16);
 
 	auto mu = -2. + kappa * std::pow(N, -ymu) ;
 	auto delta = 1.;
@@ -61,7 +76,7 @@ while( argc > 1 ) {
    	 ampo += -mu,"Cdag",n,"C",n;
    	 ampo += -g,"Cdag",n,"C",n, "Cdag",n+1,"C",n+1;
    	 
-   	 //ampo += - Cplx_i / 2., "Cdag", n, "C", n;
+   	// ampo += - Cplx_i / 2., "Cdag", n, "C", n;
    	 }
    	 ampo += -mu,"Cdag",N,"C",N;
 
@@ -79,41 +94,102 @@ while( argc > 1 ) {
 	auto sweeps0 = Sweeps(5); //number of sweeps is 5
 	sweeps0.maxdim() = 10,20,100,100,200;
 	sweeps0.cutoff() = 1E-10;
-	auto [energy,psi] = dmrg(H,randomMPS(sites),sweeps0,{"Quiet=",true});
+	auto [energy0,psi] = dmrg(H,randomMPS(sites),sweeps0,"Silent");
 	
-	std::cout << energy << "		" << tot_meas(psi, sites, N) << "	Energy\n";
+	std::cout << energy0 << "		" << tot_meas(psi, sites, N) << "	Energy\n";
 
-    char output[80];
-    std::sprintf(output, "couplingN%dk%.0fj%.0f.dat", N, kappa, jack);
-
-    std::ofstream out_file(output, std::ios::out | std::ios::trunc);
-    out_file.precision(16);
-    
     auto psi1 = MPS(psi);
-    auto psi2 = psi1;
+
+    auto energy = real(innerC(psi1,H,psi1));
+
+Real cutoff = 1E-8;
+auto gates = vector<BondGate>();
+
+//Create the gates exp(-i*tstep/2*hterm)
+//and add them to gates
+for(int b = 1; b <= N-1; ++b)
+    {
+    auto hterm =  - mu*op(sites,"N",b)*op(sites, "Id", b+1 );
     
+    hterm -= delta*op(sites, "Cdag", b) * op(sites,"Cdag", b+1 );
+    hterm -= delta*op(sites, "C", b+1) * op(sites,"C", b );
+    
+    hterm -= op(sites, "Cdag", b) * op(sites,"C", b+1 );
+    hterm -= op(sites, "Cdag", b+1) * op(sites,"C", b );
+    
+    hterm -= g*op(sites, "N", b) * op(sites,"N", b+1 );
+    
+    hterm -= mu*op(sites,"N",b)*op(sites, "Id", b+1 );
+    //std::cout << b << "  dms;vm\n";
+    //hterm -= Cplx_i /2. * op(sites,"N",b)*op(sites, "Id", b+1 );
 
-   // auto expH1 = toExpH(ampo,-(1-1_i)/2*t0*Cplx_i);
-    //auto expH2 = toExpH(ampo,-(1+1_i)/2*t0*Cplx_i);
-    //printfln("Maximum bond dimension of expH1 is %d",maxLinkDim(expH1));
-    auto args = Args("Method=","DensityMatrix","Cutoff=",1E-12,"MaxDim=",2000);
-    for(int n = 1; n <= int(t/t0); ++n)
-        {
-        psi2 = applyExp(H,psi2,-t0*Cplx_i);
-       // psi2.noPrime();
-        //psi2 = applyMPO(expH2,psi2,args);
-        psi2.noPrime().normalize();
-        if(n%int(std::real(t/t0)) == 0)
-            {
-            //printfln("\nMaximum bond dimension at time %.1f is %d ", n*t0, maxLinkDim(psi2));
-            //printfln("Energy using overlap at time %.1f is %.10f", n*t0, real(innerC(psi2,H,psi2)) );
-            
-            
-            out_file << n*t0 << "	" << tot_meas(psi, sites, N) << "\n";
-            }
+    auto g = BondGate(sites,b,b+1,BondGate::tReal,t0/2.,hterm);
+    //std::cout << b << "  dms;vm\n";
+    gates.push_back(g);
+    //std::cout << b << "  dms;vm\n";
+    }
+
+//Create the gates exp(-i*tstep/2*hterm) in reverse
+//order (to get a second order Trotter breakup which
+//does a time step of "tstep") and add them to gates
+for(int b = N-1; b >= 1; --b)
+    {
+    auto hterm = - mu*op(sites,"N",b+1)*op(sites, "Id", b );
+    
+    hterm -= delta*op(sites, "Cdag", b) * op(sites,"Cdag", b+1 );
+    hterm -= delta*op(sites, "C", b+1) * op(sites,"C", b );
+    
+    hterm -= op(sites, "Cdag", b) * op(sites,"C", b+1 );
+    hterm -= op(sites, "Cdag", b+1) * op(sites,"C", b );
+    
+    hterm -= g*op(sites, "N", b) * op(sites,"N", b+1 );
+    
+    if (b==N-1) hterm -= Cplx_i /2. * op(sites,"N",b+1)*op(sites, "Id", b );
+    
+    auto g = BondGate(sites,b,b+1,BondGate::tReal,t0/2.,hterm);
+    gates.push_back(g);
+    }
+
+//Save initial state;	psi2
+
+//Time evolve, overwriting psi when done
+//gateTEvol(gates,tend,t0,psi2,{"Cutoff=",cutoff,"Verbose=",true});
 
 
-        }
+ 
+    auto Cop = op(sites, "C", N);
+    double dpm(0.), obs(0.);
+   field<itensor::MPS> psi2(ensem);
+    
+ for(int sweep=0; sweep<int(t/t0); ++sweep ) {
+   obs = 0.;
+   for(int tt=0; tt < ensem; ++tt){
+   	if(sweep==0) psi2(tt) = psi1;
+    /*
+    	psi2.position(N);
+    	auto psi2dag = dag(prime(psi2(N),"Site"));
+    	dpm = t0*real(eltC(psi2dag*Cop*psi2(N)));
+	*/
+	dpm = t0*measure(N, psi2(tt), sites);
+	//std::cout << dpm << "\n";
+
+    	if(dist(mt) <= dpm){
+    		psi2(tt).position(N);
+     	auto newA = Cop*psi2(tt)(N);
+		newA.noPrime();
+		psi2(tt).set(N,newA);
+		psi2(tt).noPrime().normalize();
+		//std::cout << dpm << "kkkkkkk\n";
+    	}
+    	else {
+    		gateTEvol(gates,t0,t0,psi2(tt),{"Cutoff=",cutoff,"Silent=",true});
+    	}
+    	//out_file << sweep*t0 << "		" << tot_meas(psi2, sites, N) << "\n";
+	obs += tot_meas(psi2(tt), sites, N);
+    }
+  out_file << sweep*t0 << "		" << obs/ensem << "\n";
+  }
+
     return(0);
 }
 
