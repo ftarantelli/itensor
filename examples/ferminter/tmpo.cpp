@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
 	double pbc(0.), t0(0.01), tend(1.), t(0.05);
 	int N = 8, nsw = tend/t;
-	auto sites = Spinless(N, {"ConserveQNs=", false} );
+	auto sites = Spinless(N, {"ConserveQNs=", false} );// Fermion
 	
 	const double yg(2.), ymu(1.);
 	double kappa(1.), jack(1.);

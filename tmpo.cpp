@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
 	double pbc(-1.), t0(0.01), tend(1.), t(0.05);
 	int N = 20;
-	auto sites = Fermion(N, {"ConserveQNs=", false} );
+	auto sites = Electron(N, {"ConserveQNs=", false} );
 	
 	const double yg(2.), ymu(1.);
 	double kappa(1.), jack(1.);
