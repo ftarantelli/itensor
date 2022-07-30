@@ -12,6 +12,6 @@ num="$#"
 fname="$ARGV"
 aux=`echo "${aux} ${fname}"`
 
-git checkout origin/$fin -- ${PWD}/${aux}
+git checkout origin/$fin -- ${aux}
 git commit -m "update ${aux} from ${fin}"
 git push -u origin $act
