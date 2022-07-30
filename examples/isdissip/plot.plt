@@ -132,20 +132,13 @@ dataf3 = sprintf("%s", ARG3);
 plot  "dissipationL6.dat" using ($1):($2) t 'diss' w l lw 5. lt rgb 'red' dt 6,\
       "quenchL6.dat" using ($1):($2) t 'quench' w l lw 5. lt rgb 'dark-green' dt 2,\
       "isdisN6.dat0" using ($1):($2) t '0mps0' w l lw 5. lt rgb 'blue' dt 5,\
-      "isdisN6.dat" using ($1):($2) t 'mps' w l lw 5. lt rgb 'black' dt 2,\
+      "isdisN6.dat" using ($1):($2):3 t 'mps' w yerrorlines lw 2. lt rgb 'black' dt 1 pt 7 ps 1,\
       "tempN6.dat" using ($1):($2) t 'Qtdvp' w l lw 5. lt rgb 'dark-orange' dt 8,\
       #dataf3 using ($1):($2) t 'L = 14' w l lw 5. lt 7 dt 6,\
 #      "noisekitL100k1Dk2.dat" using ($1):(($2)*150.**(1/8.)) t 'L = 150' w l lw 3. lt 8 dt 1,\
-#      "isC2DeS150l50.dat" using ($1):($2*50**(1./8.)) t 'L = 50  ' w l lw 5. lt 1 dt 4,\
-       #      "isC2DeS150l250.dat" using ($1):($2*250.**(1./8.)) t 'L = 250' w l lw 2. lt rgb 'black' dt 6,\
-#      "isC2DeS150l300.dat" using ($1):(($2)*300.**(1/8.)) t 'L = 300' w l lw 5. lt 8 dt 7,\
-#      "data/tPyL8g1.dat" using ($1):($2) t 'L=4' pt 7 ps 0.8 lt 7,\
-#      "data/CtL6g1.dat" using ($1):($2) t 'L=4' w l lw 5. lt rgb 'blue' dt 1 ,\
-#      "data/kzUp1Sig-1L8.dat" using ($1):($2) t 'L=4' w l lw 5. lt rgb 'dark-green' dt 2 ,\
-#      "data/kzUp1Sig-1L8.dat" using ($1):($2) t 'L=4' w l lw 5. lt 1 dt 6 ,\
-#      "data/gsL6g1.dat" using ($1):($2*6.**(0.)) t 'L=6' w l lw 5. lt rgb 'orange' dt 5 ,\
-#      "data/kzUp1Sig-1L7.dat" using ($1/7.):($2*7.**(0.)) t 'L=7' w l lw 5. lt rgb 'red' dt 6,\
-#      "data/kzUp1Sig-1L8.dat" using ($1/8.):($2*8.**(0.)) t 'L=8' w l lw 5. lt 8 dt 1,\
+#     "isdisN6.dat" using ($1):($2):3 t 'mps' w yerrorlines lw 2. lt rgb 'black' dt 1 pt 7 ps 1,\
+
+
 #do for [N=1:5] {
 #plot func(N, x)
 #pause -1
