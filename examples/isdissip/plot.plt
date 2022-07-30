@@ -22,7 +22,7 @@ set output 'graph.eps'
 set multiplot
 
 #set key spacing 1
-set key top left          # top, bottom, right, left, center
+set key bottom left          # top, bottom, right, left, center
 #set key at first 7.7, first 0.3
 #set key width 0.1 height 0.1
 #set key horizontal 
@@ -129,9 +129,11 @@ dataf3 = sprintf("%s", ARG3);
 
 
 
-plot  "dissipationL6.dat" using ($1):($2) t 'mps' w l lw 5. lt rgb 'red' dt 6,\
-      "isdisN6.dat0" using ($1):($2) t 'L = 12' w l lw 5. lt rgb 'blue' dt 5,\
-      "isdisN6.dat" using ($1):($2) t '50mps' w l lw 5. lt rgb 'black' dt 2,\
+plot  "dissipationL6.dat" using ($1):($2) t 'diss' w l lw 5. lt rgb 'red' dt 6,\
+      "quenchL6.dat" using ($1):($2) t 'quench' w l lw 5. lt rgb 'dark-green' dt 2,\
+      "isdisN6.dat0" using ($1):($2) t '0mps0' w l lw 5. lt rgb 'blue' dt 5,\
+      "isdisN6.dat" using ($1):($2) t 'mps' w l lw 5. lt rgb 'black' dt 2,\
+      "tempN6.dat" using ($1):($2) t 'Qtdvp' w l lw 5. lt rgb 'dark-orange' dt 8,\
       #dataf3 using ($1):($2) t 'L = 14' w l lw 5. lt 7 dt 6,\
 #      "noisekitL100k1Dk2.dat" using ($1):(($2)*150.**(1/8.)) t 'L = 150' w l lw 3. lt 8 dt 1,\
 #      "isC2DeS150l50.dat" using ($1):($2*50**(1./8.)) t 'L = 50  ' w l lw 5. lt 1 dt 4,\

@@ -62,7 +62,7 @@ while( argc > 1 ) {
 	--argc;
 }
 
-    int nsw = tend/t;
+    int nsw = tend/t0;
     int N = Nx*Ny;
     
     char output[80];
@@ -102,7 +102,7 @@ while( argc > 1 ) {
     //auto obsite = 3;
     
     auto psi1 = MPS(psi);
-    std::cout << measure(3, psi1, sites) << "\n";
+    //std::cout << measure(3, psi1, sites) << "\n";
     //exit(8);
     //auto psi2 = psi1;
     auto energy = real(innerC(psi1,H,psi1));
@@ -115,9 +115,9 @@ while( argc > 1 ) {
         ampo += h, "Sx", i;
         }
         ampo += h, "Sx", N;
-        //ampo += -Cplx_i*w/2., "Id", 1; 
+        ampo += -Cplx_i*w/2., "Id", 1; 
 
-   // H = toMPO(ampo);
+    H = toMPO(ampo);
 	
 
     auto sweeps = Sweeps(1);
@@ -128,6 +128,11 @@ while( argc > 1 ) {
     sweeps.cutoff() = std::pow(1, -expcutoff);//1E-12;
     sweeps.niter() = 10;
     */
+
+/*
+    std::sprintf(output, "tempN%d.dat", N);//"%s/fotqu%.0fs%.0fl%d.dat", folder, upsilon*10., abs(sigma), Lsize );
+    std::ofstream host(output, std::ios::out | std::ios::trunc);
+    host.precision(16);
 
 //std::cout << "hghgh11g\n";
     for(int n = 1; n <= nsw; ++n)
@@ -144,11 +149,14 @@ while( argc > 1 ) {
             }
         
         // TDVP sweep
-        energy = tdvp(psi1,H,-t,sweeps,{"Truncate",true,
+        energy = tdvp(psi1,H,-t0,sweeps,{"Truncate",true,
                                         "DoNormalize",true,
                                         "Quiet",true,
                                         "NumCenter",1});
+	host << n*t0 << "		" << measure(3, psi1, sites) << "\n";
         }
+*/
+    
 
     //printfln("\nEnergy after imaginary time evolution = %.10f",energy);
     //printfln("Using overlap = %.10f", real(innerC(psi1,H,psi1)) );
@@ -159,25 +167,30 @@ while( argc > 1 ) {
     auto expH2 = toExpH(ampo,-(1+1_i)/2*t0*Cplx_i);
     
     //printfln("Maximum bond dimension of expH1 is %d",maxLinkDim(expH1));
-    auto args = Args("Method=","DensityMatrix","Cutoff=",1E-12,"MaxDim=",2000);
-        
+    auto args = Args("Method=","Fit","Cutoff=",1E-12,"MaxDim=",2000,"IsHermitian=",false);
+        //DensityMatrix		&		Fit
    auto Cop = op(sites, "Sz", 1);
    double dpm(0.), obs(0.);
    field<itensor::MPS> psi2(ensem);
    
    for(int tt=0; tt < ensem; ++tt)
    	psi2(tt) = psi1;
-    
+
  for(int sweep=0; sweep<int(tend/t0); ++sweep ) {
    obs = 0.;
+   if ( sweep%(int(tend/t0)/10) == 0) {
+	std::cout << int(sweep/tend*t0*100.) << "%\n";
+	out_file << std::flush;
+   }
+
    for(int tt=0; tt < ensem; ++tt){
    	//if(sweep==0) psi2(tt) = psi1;
     /*
     	psi2.position(N);
     	auto psi2dag = dag(prime(psi2(N),"Site"));
     	dpm = t0*real(eltC(psi2dag*Cop*psi2(N)));
-	*/
-	dpm = t0;
+    */
+	dpm = w*t0;
 	//std::cout << dpm << "\n";
 
     	if(dist(mt) <= dpm){
