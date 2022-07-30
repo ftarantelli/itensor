@@ -83,9 +83,38 @@ auto correlator(auto i, auto j, auto psi, auto sites){
 	return(result);
 }
 
+/*
+Measuring Properties of MPS
 
 
+    expect(MPS psi, SiteSet sites, string A) -> vector<Real>
+    expectC(MPS psi, SiteSet sites, string A) -> vector<Cplx>
 
+Compute the expected value ⟨ψ|A^|ψ⟩ for an operator A on every site, returning a vector of the results. The operator can be any operator name recognized by the SiteSet, such as "Sz" for the SpinHalf SiteSet. The function expectC returns a vector of complex values and should be used when complex results are expected.
+
+
+    expect(MPS psi, SiteSet sites, vector<string> ops) -> vector<vector<Real>>
+    expectC(MPS psi, SiteSet sites, vector<string> ops) -> vector<vector<Cplx>>
+
+Compute the expected value of a set of operators ops for each site of the MPS psi. Similar to calling the single-operator version of expect above but is more efficient. The returned value is a vector of vectors, one for each operator, containing the expected values on each site.
+
+
+    correlationMatrix(MPS psi, SiteSet sites, string A, string B) -> vector<vector<Real>> 	     
+    correlationMatrixC(MPS psi, SiteSet sites, string A, string B) -> vector<vector<Cplx>>
+
+Given an MPS psi, a SiteSet, and two strings denoting operators computes the two-point correlation function matrix Mij=⟨ψ|A^iB^j|ψ⟩ using efficient MPS techniques. Returns the matrix M.
+
+
+***Multiplying MPOs***
+
+
+    nmultMPO(MPO A, MPO B, Args args = Args::global()) -> MPO
+
+Multiply MPOs A and B, returning the results MPO. MPO tensors are multiplied one at a time from left to right and the resulting tensors are compressed using the truncation parameters (such as "Cutoff" and "MaxDim") provided through the named arguments args.
+
+For each j, MPO tensors A(j) and B(j) must share a single site index. MPO C will contain the site indices not shared by MPOs A and B. In addition, the link indices of MPO C will have the same tags as the link indices of the MPO A.
+
+*/
 
 ///		COMMENT
 

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     int Nx = 6;
     int Ny = 1, ensem(100);
     
-    auto t = 0.05;
+    auto t = 0.1;
     auto tend = 1.;
     
     auto t0 = 0.01;
@@ -44,7 +44,7 @@ while( argc > 1 ) {
 		case 'h': 
 			if(argv[1][1] == 'i')		hi = atof( &argv[1][2] )*J/2.;
 			else if(argv[1][1] == 'f')	hf = atof( &argv[1][2] )*J/2.;
-			else						h = atof( &argv[1][1] )*J/2.;
+			else				h = atof( &argv[1][1] )*J/2.;
 			break;
 		case 't':
 			if(argv[1][1] == 'o')		t0 = atof( &argv[1][2] );
@@ -170,14 +170,14 @@ while( argc > 1 ) {
     auto args = Args("Method=","Fit","Cutoff=",1E-12,"MaxDim=",2000,"IsHermitian=",false);
         //DensityMatrix		&		Fit
    auto Cop = op(sites, "Sz", 1);
-   double dpm(0.), obs(0.);
+   double dpm(0.), obs(0.), mean_obs(0.), var_obs(0.), delta;
    field<itensor::MPS> psi2(ensem);
    
    for(int tt=0; tt < ensem; ++tt)
    	psi2(tt) = psi1;
 
  for(int sweep=0; sweep<int(tend/t0); ++sweep ) {
-   obs = 0.;
+   obs = 0.; mean_obs = 0.; var_obs = 0.;
    if ( sweep%(int(tend/t0)/10) == 0) {
 	std::cout << int(sweep/tend*t0*100.) << "%\n";
 	out_file << std::flush;
@@ -195,23 +195,33 @@ while( argc > 1 ) {
 
     	if(dist(mt) <= dpm){
     		psi2(tt).position(1);
-     	auto newA = Cop*psi2(tt)(1);
+     		auto newA = Cop*psi2(tt)(1);
 		newA.noPrime();
 		psi2(tt).set(1,newA);
 		psi2(tt).noPrime().normalize();
 		//std::cout << dpm << "kkkkkkk\n";
     	}
     	else {
-    	   psi2(tt) = applyMPO(expH1,psi2(tt),args);
-        psi2(tt).noPrime();
-        psi2(tt) = applyMPO(expH2,psi2(tt),args);
-        psi2(tt).noPrime().normalize();
+           psi2(tt) = applyMPO(expH1,psi2(tt),args);
+           psi2(tt).noPrime();
+           psi2(tt) = applyMPO(expH2,psi2(tt),args);
+           psi2(tt).noPrime().normalize();
     	}
     	//out_file << sweep*t0 << "		" << tot_meas(psi2, sites, N) << "\n";
-	obs += measure(3, psi2(tt), sites);
+	obs = measure(3, psi2(tt), sites);
+	//obs += measure(3, psi2(tt), sites);
+
+	delta = obs - mean_obs;
+	mean_obs = mean_obs + delta / float(tt + 1.);
+	var_obs = var_obs + delta * (obs - mean_obs);
     }
-  out_file << sweep*t0 << "		" << obs/ensem << "\n";
-  }
+
+
+   // if ( sweep%(int(t/t0)) == 0) {
+	var_obs = std::pow(var_obs / float(ensem-1.)/float(ensem), 0.5); //
+  	out_file << sweep*t0 << "		" << mean_obs << "		" << var_obs << "\n";
+  //  }
+ }
 
     return 0;
     }
