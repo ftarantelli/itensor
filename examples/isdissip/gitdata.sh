@@ -1,5 +1,8 @@
-#git checkout cluster
-git checkout home
+act='home'
+fin='cluster'
+
+#git checkout $fin
+#git checkout $act
 git pull
 
 aux=''
@@ -9,6 +12,6 @@ num="$#"
 fname="$ARGV"
 aux=`echo "${aux} ${fname}"`
 
-git checkout origin/cluster -- ${PWD}/${aux}
-git commit -m "update ${aux} from cluster"
-git push -u origin home
+git checkout origin/$fin -- ${PWD}/${aux}
+git commit -m "update ${aux} from ${fin}"
+git push -u origin $act
