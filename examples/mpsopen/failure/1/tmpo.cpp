@@ -72,7 +72,6 @@ while( argc > 1 ) {
     
         // Make N spin 1/2's
     auto sites = SpinHalf(N, {"ConserveQNs=", false});
-    auto nsites = SpinHalf(2*N, {"ConserveQNs=", false});
 
     // Make the Hamiltonian for rung-decoupled Heisenberg ladder
     auto ampo = AutoMPO(sites);
@@ -107,7 +106,7 @@ while( argc > 1 ) {
 
     auto [energy0,psi] = dmrg(H,psi0,sweeps0,"Silent");
     //auto obsite = 3;
-    auto rho = ret_kron_mps(psi, psi, sites, nsites, N);
+    
     auto psi1 = MPS(psi);
     //std::cout << measure(3, psi1, sites) << "\n";
     //exit(8);
@@ -158,7 +157,7 @@ while( argc > 1 ) {
     
     auto args = Args("Method=","Fit","Cutoff=",1E-12,"MaxDim=",2000,"IsHermitian=",false);
         //DensityMatrix		&		Fit
-
+   
    double obs(0.);
 
    auto mampo = AutoMPO(sites);
