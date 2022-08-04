@@ -1,8 +1,6 @@
 #include "tmpo.hpp"
 #include <fstream>
-#include <armadillo>
 
-using namespace arma;
 
 std::random_device rd;
 std::mt19937 mt(rd());
@@ -75,55 +73,67 @@ while( argc > 1 ) {
     auto nsites = SpinHalf(2*N, {"ConserveQNs=", false});
 
     // Make the Hamiltonian for rung-decoupled Heisenberg ladder
-    auto ampo = AutoMPO(sites);
-    auto lampo = AutoMPO(sites);
+    auto ampo = AutoMPO(nsites);
+    //auto lampo = AutoMPO(sites);
     for(int i = 1; i <= N-1; ++ i)
         {
-        ampo += -J,"Sx",i,"Sx",i+1;
-        ampo += -g, "Sz",i;
-        lampo += -J,"Sx",i,"Sx",i+1;
-        lampo += -g, "Sz",i;
+        ampo += -J,"Sx",2*i-1,"Sx",2*i+1;
+        ampo += -g, "Sz",2*i-1;
+
+        ampo += -J,"Sx",2*i,"Sx",2*i+2;
+        ampo += -g, "Sz",2*i;
         }
-        ampo += -g, "Sz",N;
-        lampo += -g, "Sz",N;
+        ampo += -g, "Sz",2*N-1;
+        ampo += -g, "Sz",2*N;
         
     //auto H = toMPO(ampo);
 	
-    for(int i = 1; i <= N-1; ++ i)
-	   {
-        ampo += -hi, "Sx", i;
-        lampo += -hi, "Sx", i;
+    for(int i = 1; i <= N; ++ i)
+	{
+        ampo += -hi, "Sx", 2*i-1;
+
+        ampo += -hi, "Sx", 2*i;
         }
-    ampo += -hi, "Sx",N;
-    lampo += -hi, "Sx",N;
     
    //ampo += ampoh*h;
     auto H = toMPO(ampo);
     
-    auto psi0 = randomMPS(sites);
+    auto psi0 = randomMPS(nsites);
     auto sweeps0 = Sweeps(5); //number of sweeps is 5
     sweeps0.maxdim() = 10,20,100,100,200;
     sweeps0.cutoff() = 1E-10;
 
     auto [energy0,psi] = dmrg(H,psi0,sweeps0,"Silent");
     //auto obsite = 3;
-    auto rho = ret_kron_mps(psi, psi, sites, nsites, N);
-    auto psi1 = MPS(psi);
+
+    auto rho = MPS(psi);
+    //auto psi1 = MPS(psi);
+    //auto rho = ret_kron_mps(psi1, psi1, sites, nsites, N);
     //std::cout << measure(3, psi1, sites) << "\n";
     //exit(8);
-    auto psi2 = psi1;
-    auto energy = real(innerC(psi1,H,psi1));
+    //auto psi2 = psi1;
+    //auto energy = real(innerC(psi1,H,psi1));
     
-
-    // QUENCH
-    h = hi - hf;
+    auto zampo = AutoMPO(nsites);
     for(int i = 1; i <= N-1; ++ i)
         {
-        ampo += h, "Sx", i;
-        lampo += h, "Sx", i;
+        zampo += -J,"Sx",2*i-1,"Sx",2*i+1;
+        zampo += -g, "Sz",2*i-1;
+
+        zampo += -J,"Sx",2*i,"Sx",2*i+2;
+        zampo += -g, "Sz",2*i;
         }
-        ampo += h, "Sx", N;
-        lampo += h, "Sx", N;
+	zampo += -g, "Sz",2*N-1;
+        zampo += -g, "Sz",2*N;
+
+
+    // QUENCH
+    h = - hf;
+    for(int i = 1; i <= N; ++ i)
+        {
+        zampo += h, "Sx", 2*i-1;
+        zampo += h, "Sx", 2*i;
+        }
 
     //H = toMPO(ampo);
 
@@ -133,30 +143,33 @@ while( argc > 1 ) {
     //lampo2 += ampo;	
     for(int i = 1; i <= N; ++ i)
         {
-        ampo += Cplx_i, "Id", i; //? - or not
-	lampo += -Cplx_i, "Id", i;
+        zampo += Cplx_i, "Id", 2*i-1; //? - or not
+	zampo += -Cplx_i, "Id", 2*i;
         }
-        ampo += 2.*w, "Sz", 1;
-	lampo += 2.*w, "Sz", 1;
+        zampo += 2.*w, "Sz", 1;
+	zampo += 2.*w, "Sz", 2;
 
-	ampo += -w/2., "Id", 1;
-	lampo += -w/2., "Id", 1;
+	zampo += -w/2., "Id", 1;
+	zampo += -w/2., "Id", 2;
 
-	ampo += -w/2., "Id", 1;
-	lampo += -w/2., "Id", 1;
+	zampo += -w/2., "Id", 1;
+	zampo += -w/2., "Id", 2;
 
     auto sweeps = Sweeps(1);
     sweeps.maxdim() = 2000;
     sweeps.cutoff() = 1E-12;
 
 
-    auto expH1 = toExpH(ampo,-(1-1_i)/2*t0*Cplx_i);
-    auto expH2 = toExpH(ampo,-(1+1_i)/2*t0*Cplx_i);
+    auto expH1 = toExpH(zampo,-(1-1_i)/2*t0*Cplx_i);
+    auto expH2 = toExpH(zampo,-(1+1_i)/2*t0*Cplx_i);
 
-    auto exp2H1 = toExpH(lampo,-(1-1_i)/2*t0*Cplx_i);
-    auto exp2H2 = toExpH(lampo,-(1+1_i)/2*t0*Cplx_i);
+    //auto exp2H1 = toExpH(lampo,-(1-1_i)/2*t0*Cplx_i);
+    //auto exp2H2 = toExpH(lampo,-(1+1_i)/2*t0*Cplx_i);
+
+    //auto eLiov1 = ret_kron_mpo(expH1, exp2H1, sites, nsites, N);
+    //auto eLiov2 = ret_kron_mpo(expH2, exp2H2, sites, nsites, N);
     
-    auto args = Args("Method=","Fit","Cutoff=",1E-12,"MaxDim=",2000,"IsHermitian=",false);
+    auto args = Args("Method=","DensityMatrix","Cutoff=",1E-12,"MaxDim=",2000,"IsHermitian=",false);
         //DensityMatrix		&		Fit
 
    double obs(0.);
@@ -165,27 +178,24 @@ while( argc > 1 ) {
    mampo += 2., "Sz", 3;
    auto Szz = toMPO(mampo);
 
+//std::cout << siteInds(rho) << "\n" << siteInds(psi) << "\n\n" <<  siteInds(expH1, 3) << "\n";
+
  for(int sweep=0; sweep<int(tend/t0); ++sweep ) {
    
    if ( sweep%(int(tend/t0)/10) == 0) {
 	std::cout << int(sweep/tend*t0*100.) << "%\n";
 	out_file << std::flush;
    }
-           psi1 = applyMPO(expH1,psi1,args);
-           psi1.noPrime();
-           psi1 = applyMPO(expH2,psi1,args);
-           psi1.noPrime().normalize();
+           rho = applyMPO(expH1,rho,args);
+           rho.noPrime();
+           rho = applyMPO(expH2,rho,args);
+           rho.noPrime().normalize();
 
-           psi2 = applyMPO(exp2H1,psi2,args);
-           psi2.noPrime();
-           psi2 = applyMPO(exp2H2,psi2,args);
-           psi2.noPrime().normalize();
-    	
 	//obs = measure(3, psi1, psi2, sites);
-	obs = real(innerC(psi1, Szz, psi2));	//real(innerC(psi1, psi2));	//innerC(MPS y, MPO A, MPS x)
+	//obs = real(innerC(psi1, Szz, psi2));	//real(innerC(psi1, psi2));	//innerC(MPS y, MPO A, MPS x)
 	
-        out_file << sweep*t0 << "		" << obs << "\n";
-
+        //out_file << sweep*t0 << "		" << obs << "\n";
+	out_file << sweep*t0 << "		" << measure(3, rho, nsites) << "\n";
  }
 
 

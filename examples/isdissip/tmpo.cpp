@@ -17,11 +17,11 @@ int main(int argc, char *argv[])
     int Nx = 6;
     int Ny = 1, ensem(100);
     
-    auto t = 0.1;
+    auto t = 0.;
     auto tend = 1.;
     
-    auto t0 = 0.01;
-    
+    auto t0 = 0.01, ttry = 0.02, dp = 0.001, dpp = 0.002 ; // tdid <= ttry; dp << 1; dpp >= dp;
+
     auto J = 4.;
     auto g = 1.*J/2., w = 1.;
     auto h = 0.5*J/2., hf = 0.*J/2., hi = 0.5*J/2.;
@@ -49,7 +49,10 @@ while( argc > 1 ) {
 		case 't':
 			if(argv[1][1] == 'o')		t0 = atof( &argv[1][2] );
 			else if(argv[1][1] == 'd')	tend = atof( &argv[1][2] );
-			else						t = atof( &argv[1][1] );			
+			break;
+		case 'p':
+			if(argv[1][1] == 'P')		dpp = atof( &argv[1][2] );
+			else				dp = atof( &argv[1][2] );
 			break;
 		case '-':
 			//	std::sprintf(folder, "%s", &argv[1][1]);
@@ -163,66 +166,101 @@ while( argc > 1 ) {
 
     //println("-------------------------------------MPO W^I 2nd order---------------------------------------");
 
-    auto expH1 = toExpH(ampo,-(1-1_i)/2*t0*Cplx_i);
-    auto expH2 = toExpH(ampo,-(1+1_i)/2*t0*Cplx_i);
+
     
     //printfln("Maximum bond dimension of expH1 is %d",maxLinkDim(expH1));
     auto args = Args("Method=","Fit","Cutoff=",1E-12,"MaxDim=",2000,"IsHermitian=",false);
         //DensityMatrix		&		Fit
    auto Cop = op(sites, "Sz", 1);
-   double dpm(0.), obs(0.), mean_obs(0.), var_obs(0.), delta;
+   double dpm(0.);
    field<itensor::MPS> psi2(ensem);
-   
+   field<double> obstime(20*int(tend/dp)+1), obs(20*int(tend/dp)+1);
+
+   const double TRY = ttry;
+   int sweep(0);
    for(int tt=0; tt < ensem; ++tt)
    	psi2(tt) = psi1;
 
- for(int sweep=0; sweep<int(tend/t0); ++sweep ) {
-   obs = 0.; mean_obs = 0.; var_obs = 0.;
-   if ( sweep%(int(tend/t0)/10) == 0) {
-	std::cout << int(sweep/tend*t0*100.) << "%\n";
-	out_file << std::flush;
-   }
+   double delta, deltat;
 
-   for(int tt=0; tt < ensem; ++tt){
-   	//if(sweep==0) psi2(tt) = psi1;
-    /*
-    	psi2.position(N);
-    	auto psi2dag = dag(prime(psi2(N),"Site"));
-    	dpm = t0*real(eltC(psi2dag*Cop*psi2(N)));
-    */
-	dpm = w*t0;
-	//std::cout << dpm << "\n";
+ //for(int sweep=0; sweep<int(tend/t0); ++sweep ) {
 
-    	if(dist(mt) <= dpm){
-    		psi2(tt).position(1);
-     		auto newA = Cop*psi2(tt)(1);
-		newA.noPrime();
-		psi2(tt).set(1,newA);
-		psi2(tt).noPrime().normalize();
-		//std::cout << dpm << "kkkkkkk\n";
-    	}
-    	else {
-           psi2(tt) = applyMPO(expH1,psi2(tt),args);
-           psi2(tt).noPrime();
-           psi2(tt) = applyMPO(expH2,psi2(tt),args);
-           psi2(tt).noPrime().normalize();
-    	}
-    	//out_file << sweep*t0 << "		" << tot_meas(psi2, sites, N) << "\n";
-	obs = measure(3, psi2(tt), sites);
-	//obs += measure(3, psi2(tt), sites);
+ for(int tt=0; tt < ensem; ++tt){
+	ttry = TRY;
+	double tdid, tnext(ttry);
+	sweep = 0;
 
-	delta = obs - mean_obs;
-	mean_obs = mean_obs + delta / float(tt + 1.);
-	var_obs = var_obs + delta * (obs - mean_obs);
+	t = 0.;
+
+	if ( tt%(ensem/10) == 0) {
+		std::cout << int( float(tt)/float(ensem)*100. ) << "%\n";
+		out_file << std::flush;
+	}
+
+   while(t < tend){
+	ttry = tnext;
+	tdid = std::min(ttry, t0*(sweep + 1) - t);
+
+	auto expH1 = toExpH(ampo,-(1-1_i)/2*tdid*Cplx_i);
+	auto expH2 = toExpH(ampo,-(1+1_i)/2*tdid*Cplx_i);
+
+	psi1 = psi2(tt);
+        psi2(tt) = applyMPO(expH1,psi2(tt),args);
+        psi2(tt).noPrime();
+        psi2(tt) = applyMPO(expH2,psi2(tt),args);
+        psi2(tt).noPrime().normalize();
+
+	if (1.*w*tdid < dpp){
+		t += tdid;
+		tnext = std::min(tnext, dp/1./w);
+		dpm = 1./tdid*dist(mt);
+
+    		if(dpm < 1.*w){
+    			psi2(tt).position(1);
+     			auto newA = Cop*psi2(tt)(1);
+			newA.noPrime();
+			psi2(tt).set(1,newA);
+			psi2(tt).noPrime().normalize();
+    		}
+		//obs(sweep) += measure(3, psi2(tt), sites);
+		//obstime(sweep) += t;
+		double tempor = measure(3, psi2(tt), sites);
+		delta = tempor - obs(sweep);
+		obs(sweep) = obs(sweep) + delta / float(tt + 1.);
+
+		deltat = t - obstime(sweep);
+		obstime(sweep) = obstime(sweep) + deltat / float(tt + 1.);
+//std::cout << dpm << "	" << t << "	" << tempor << " " << obstime(sweep) << "	" << obs(sweep) << "\n";
+		++sweep;
+	}
+	else {
+		tnext = dp / 1./w;
+		psi2(tt) = psi1;
+	}
     }
-
-
-   // if ( sweep%(int(t/t0)) == 0) {
-	var_obs = std::pow(var_obs / float(ensem-1.)/float(ensem), 0.5); //
-  	out_file << sweep*t0 << "		" << mean_obs << "		" << var_obs << "\n";
-  //  }
  }
 
-    return 0;
-    }
+ for(int j=0; j < sweep; ++j)
+  	out_file << obstime(j) << "		" << obs(j) << "\n";
 
+  //###ADAPTIVE###
+
+
+    return 0;
+}
+
+
+
+
+/*
+  double tempd(abs(obs(0)-mean_obs));
+  int inddx(0);
+  for(int tt=0; tt < ensem; ++tt){
+	if(tempd > abs(obs(tt)-mean_obs) ) {
+		tempd = abs(obs(tt)-mean_obs);
+		inddx = tt;
+	}
+  }
+  for(int tt=0; tt < ensem; ++tt)
+	psi2(tt) = psi2(inddx);
+*/

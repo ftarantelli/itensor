@@ -132,7 +132,7 @@ dataf3 = sprintf("%s", ARG3);
 plot  "dissipationL6.dat" using ($1):($2) t 'diss' w l lw 5. lt rgb 'red' dt 6,\
       "quenchL6.dat" using ($1):($2) t 'quench' w l lw 5. lt rgb 'dark-green' dt 2,\
       "isdisN6.dat0" using ($1):($2) t '0mps0' w l lw 5. lt rgb 'blue' dt 5,\
-      "isdisN6.dat" using ($1):($2):3 t 'mps' w l lw 2. lt rgb 'black' dt 1,\
+      "isdisN6.dat" using ($1):($2) t 'mps' w l lw 2. lt rgb 'black' dt 1,\
       "tempN6.dat" using ($1):($2) t 'Qtdvp' w l lw 5. lt rgb 'dark-orange' dt 8,\
       #dataf3 using ($1):($2) t 'L = 14' w l lw 5. lt 7 dt 6,\
 #      "noisekitL100k1Dk2.dat" using ($1):(($2)*150.**(1/8.)) t 'L = 150' w l lw 3. lt 8 dt 1,\
