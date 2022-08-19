@@ -14,13 +14,12 @@ int main(int argc, char *argv[])
     {
 
 	double pbc(0.), t0(0.01), tend(1.), t(0.05);
-	int N = 8, nsw = tend/t;
-	auto sites = Spinless(N, {"ConserveQNs=", false} );// Fermion
+	int N = 8;
 	
 	const double yg(2.), ymu(1.);
 	double kappa(1.), jack(1.);
 	
-    int ensem(100);
+	int ensem(100);
 	
 while( argc > 1 ) {
 
@@ -59,6 +58,9 @@ while( argc > 1 ) {
      std::sprintf(output, "couplingN%dk%.0fj%.0f.dat", N, kappa, jack);
 	std::ofstream out_file(output, std::ios::out | std::ios::trunc);
 	out_file.precision(16);
+
+	int nsw = tend/t;
+	auto sites = Spinless(N, {"ConserveQNs=", false} );// Fermion
 
 	auto mu = -2. + kappa * std::pow(N, -ymu) ;
 	auto delta = 1.;

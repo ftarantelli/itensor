@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
 
 	double pbc(-1.), t0(0.01), tend(1.), t(0.05);
 	int N = 20;
-	auto sites = Fermion(N, {"ConserveQNs=", false} );
 	
 	const double yg(2.), ymu(1.);
 	double kappa(1.), jack(1.);
@@ -49,6 +48,7 @@ while( argc > 1 ) {
 }
 	int nsw = tend/t;
 
+	auto sites = Fermion(N, {"ConserveQNs=", false} );
 	auto mu = -2. + kappa * std::pow(N, -ymu) ;
 	auto delta = 1.;
 	auto g = jack * std::pow(N, -yg);
