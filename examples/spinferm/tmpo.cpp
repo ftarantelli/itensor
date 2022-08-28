@@ -55,12 +55,12 @@ while( argc > 1 ) {
 	--argc;
 }
 	char output[80];
-     std::sprintf(output, "couplingN%dk%.0fj%.0f.dat", N, kappa, jack);
+     std::sprintf(output, "spinfermdissN%d.dat", N);
 	std::ofstream out_file(output, std::ios::out | std::ios::trunc);
 	out_file.precision(16);
 
-	int nsw = tend/t;
-	auto sites = Spinless(N, {"ConserveQNs=", false} );
+	int nsw = int(t/t0);
+	auto sites = Electron(N, {"ConserveQNs=", false} );
 
 	auto mu = -2. + kappa * std::pow(N, -ymu) ;
 	auto delta = 1.;
@@ -69,24 +69,32 @@ while( argc > 1 ) {
 	auto ampo = AutoMPO(sites);
 	for( auto n : range1(N-1) )
    	 {
-   	 ampo += -delta,"Cdag",n,"Cdag",n+1;
-   	 ampo += -delta,"C",n+1,"C",n;
+   	 //ampo += -delta,"Cdag",n,"Cdag",n+1;
+   	 //ampo += -delta,"C",n+1,"C",n;
    	 
-   	 ampo += -1.,"Cdag",n,"C",n+1;
-   	 ampo += -1.,"Cdag",n+1,"C",n;
+   	 ampo += -1.,"Cdagup",n,"Cup",n+1;
+   	 ampo += -1.,"Cdagup",n+1,"Cup",n;
+
+   	 ampo += -1.,"Cdagdn",n,"Cdn",n+1;
+   	 ampo += -1.,"Cdagdn",n+1,"Cdn",n;
    	 
-   	 ampo += -mu,"Cdag",n,"C",n;
-   	 ampo += -g,"Cdag",n,"C",n, "Cdag",n+1,"C",n+1;
+   	 //ampo += -mu,"Cdag",n,"C",n;
+   	 //ampo += -g,"Cdag",n,"C",n, "Cdag",n+1,"C",n+1;
    	 
    	// ampo += - Cplx_i / 2., "Cdag", n, "C", n;
    	 }
+	/*
    	 ampo += -mu,"Cdag",N,"C",N;
 
    	 ampo += -pbc*delta,"Cdag",N,"Cdag",1;
    	 ampo += -pbc*delta,"C",1,"C",N;
-   	 
-   	 ampo += -pbc,"Cdag",N,"C",1;
-   	 ampo += -pbc,"Cdag",1,"C",N;
+	*/
+
+   	 ampo += -pbc,"Cdagup",N,"Cup",1;
+   	 ampo += -pbc,"Cdagup",1,"Cup",N;
+
+   	 ampo += -pbc,"Cdagdn",N,"Cdn",1;
+   	 ampo += -pbc,"Cdagdn",1,"Cdn",N;
 
    	 //ampo += - Cplx_i / 2., "Cdag", N, "C", N;
 
@@ -98,11 +106,13 @@ while( argc > 1 ) {
 	sweeps0.cutoff() = 1E-10;
 	auto [energy0,psi] = dmrg(H,randomMPS(sites),sweeps0,"Silent");
 	
-	std::cout << energy0 << "		" << tot_meas(psi, sites, N) << "	Energy\n";
+	//std::cout << energy0 << "		" << tot_meas(psi, sites, N) << "	Energy\n";
 
     auto psi1 = MPS(psi);
 
     auto energy = real(innerC(psi1,H,psi1));
+
+    int zq = int( (N+1)/2 );
 
 Real cutoff = 1E-8;
 auto gates = vector<BondGate>();
@@ -111,19 +121,24 @@ auto gates = vector<BondGate>();
 //and add them to gates
 for(int b = 1; b <= N-1; ++b)
     {
-    auto hterm =  - mu*op(sites,"N",b)*op(sites, "Id", b+1 );
+    //auto hterm =  - mu*op(sites,"N",b)*op(sites, "Id", b+1 );
     
-    hterm -= delta*op(sites, "Cdag", b) * op(sites,"Cdag", b+1 );
-    hterm -= delta*op(sites, "C", b+1) * op(sites,"C", b );
+    //hterm -= delta*op(sites, "Cdag", b) * op(sites,"Cdag", b+1 );
+    //hterm -= delta*op(sites, "C", b+1) * op(sites,"C", b );
     
-    hterm -= op(sites, "Cdag", b) * op(sites,"C", b+1 );
-    hterm -= op(sites, "Cdag", b+1) * op(sites,"C", b );
+    auto hterm = op(sites, "Cdagup", b) * op(sites,"Cup", b+1 );
+    hterm -= op(sites, "Cdagup", b+1) * op(sites,"Cup", b );
+
+    hterm -= op(sites, "Cdagdn", b) * op(sites,"Cdn", b+1 );
+    hterm -= op(sites, "Cdagdn", b+1) * op(sites,"Cdn", b );
     
-    hterm -= g*op(sites, "N", b) * op(sites,"N", b+1 );
+    //hterm -= g*op(sites, "N", b) * op(sites,"N", b+1 );
     
-    hterm -= mu*op(sites,"N",b)*op(sites, "Id", b+1 );
+    //hterm -= mu*op(sites,"N",b)*op(sites, "Id", b+1 );
     //std::cout << b << "  dms;vm\n";
     //hterm -= Cplx_i /2. * op(sites,"N",b)*op(sites, "Id", b+1 );
+
+    if ( b==zq ) hterm -= Cplx_i /2. * op(sites,"Nupdn",b)*op(sites, "Id", b+1 );
 
     auto g = BondGate(sites,b,b+1,BondGate::tReal,t0/2.,hterm);
     //std::cout << b << "  dms;vm\n";
@@ -136,17 +151,20 @@ for(int b = 1; b <= N-1; ++b)
 //does a time step of "tstep") and add them to gates
 for(int b = N-1; b >= 1; --b)
     {
-    auto hterm = - mu*op(sites,"N",b+1)*op(sites, "Id", b );
+    //auto hterm = - mu*op(sites,"N",b+1)*op(sites, "Id", b );
     
-    hterm -= delta*op(sites, "Cdag", b) * op(sites,"Cdag", b+1 );
-    hterm -= delta*op(sites, "C", b+1) * op(sites,"C", b );
+    //hterm -= delta*op(sites, "Cdag", b) * op(sites,"Cdag", b+1 );
+    //hterm -= delta*op(sites, "C", b+1) * op(sites,"C", b );
     
-    hterm -= op(sites, "Cdag", b) * op(sites,"C", b+1 );
-    hterm -= op(sites, "Cdag", b+1) * op(sites,"C", b );
+    auto hterm = op(sites, "Cdagup", b) * op(sites,"Cup", b+1 );
+    hterm -= op(sites, "Cdagup", b+1) * op(sites,"Cup", b );
+
+    hterm -= op(sites, "Cdagdn", b) * op(sites,"Cdn", b+1 );
+    hterm -= op(sites, "Cdagdn", b+1) * op(sites,"Cdn", b );    
+
+    //hterm -= g*op(sites, "N", b) * op(sites,"N", b+1 );
     
-    hterm -= g*op(sites, "N", b) * op(sites,"N", b+1 );
-    
-    if (b==N-1) hterm -= Cplx_i /2. * op(sites,"N",b+1)*op(sites, "Id", b );
+    if ( b==zq ) hterm -= Cplx_i /2. * op(sites,"Nupdn",b)*op(sites, "Id", b+1 );
     
     auto g = BondGate(sites,b,b+1,BondGate::tReal,t0/2.,hterm);
     gates.push_back(g);
@@ -159,27 +177,38 @@ for(int b = N-1; b >= 1; --b)
 
 
  
-    auto Cop = op(sites, "C", N);
+    auto Cop1 = op(sites, "Cup", zq);
+    auto Cop2 = op(sites, "Cdn", zq);
+
     double dpm(0.), obs(0.);
    field<itensor::MPS> psi2(ensem);
     
- for(int sweep=0; sweep<int(t/t0); ++sweep ) {
+ for(int sweep=0; sweep<nsw; ++sweep ) {
    obs = 0.;
+
+   if ( sweep % (nsw/10) == 0) {
+		std::cout << int( sweep/float(nsw)*100. ) << "%\n";
+		out_file << std::flush;
+   }
+
    for(int tt=0; tt < ensem; ++tt){
    	if(sweep==0) psi2(tt) = psi1;
     /*
-    	psi2.position(N);
-    	auto psi2dag = dag(prime(psi2(N),"Site"));
-    	dpm = t0*real(eltC(psi2dag*Cop*psi2(N)));
+    	psi2.position(zq);
+    	auto psi2dag = dag(prime(psi2(zq),"Site"));
+    	dpm = t0*real(eltC(psi2dag*Cop*psi2(zq)));
 	*/
-	dpm = t0*measure(N, psi2(tt), sites);
-	//std::cout << dpm << "\n";
-
+	dpm = t0*measure(zq, psi2(tt), sites);
+	//std::cout << dpm/t0 << "\n";
+ 
     	if(dist(mt) <= dpm){
-    		psi2(tt).position(N);
-     	auto newA = Cop*psi2(tt)(N);
-		newA.noPrime();
-		psi2(tt).set(N,newA);
+    		psi2(tt).position(zq);
+     		auto newA1 = Cop1*psi2(tt)(zq);
+		newA1.noPrime();
+		psi2(tt).set(zq,newA1);
+     		auto newA2 = Cop2*psi2(tt)(zq);
+		newA2.noPrime();
+		psi2(tt).set(zq,newA2);
 		psi2(tt).noPrime().normalize();
 		//std::cout << dpm << "kkkkkkk\n";
     	}
@@ -187,9 +216,11 @@ for(int b = N-1; b >= 1; --b)
     		gateTEvol(gates,t0,t0,psi2(tt),{"Cutoff=",cutoff,"Silent=",true});
     	}
     	//out_file << sweep*t0 << "		" << tot_meas(psi2, sites, N) << "\n";
-	obs += tot_meas(psi2(tt), sites, N);
+	obs += tot_meas(psi2(tt), sites, zq);
     }
   out_file << sweep*t0 << "		" << obs/ensem << "\n";
+
+//std::cout << sweep*t0 << "		" << obs/ensem << "\n";
   }
 
     return(0);

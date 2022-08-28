@@ -14,7 +14,7 @@ auto measure(auto j, auto psi, auto sites) {
         //auto tampo = AutoMPO(sites);
         //tampo += "Sz", j;
         //auto Szjop = toMPO(tampo);
-        auto NN = op(sites,"N",j);
+        auto NN = op(sites,"Nupdn",j);
 
         //take an inner product 
         auto nval = real(eltC(bra*NN*ket));
@@ -37,7 +37,7 @@ auto tot_meas(auto psi, auto sites, int N) {
         //auto tampo = AutoMPO(sites);
         //tampo += "Sz", j;
         //auto Szjop = toMPO(tampo);
-        auto Njop = op(sites,"N",j);
+        auto Njop = op(sites,"Ntot",j);
 
         //take an inner product 
         auto nj = eltC(bra*Njop*ket);
